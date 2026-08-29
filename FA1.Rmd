@@ -3,20 +3,20 @@ title: "SEC2_APM1110-FA1 GROUP_8-DABU, L; LIBRES, B"
 subtitle: "Github: https://github.com/dabulira20/Prob-ProbDi-FAs/blob/main/FA1.Rmd"
 output: pdf_document
 date: "`r Sys.Date()`"
---- 
-
+---
+ 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
+ 
 ### Problem 1
 ```
 Write the skewness program, and use it to calculate the skewness coefficient of the four examination subjects in results.txt (results.csv). What can you say about these data? Is Pearson’s approximation reasonable?
 ```
-
+ 
 ```{r}
 results <- read.csv("results.csv", na.strings = "NA")
-
+ 
 # exact skewness (Equation 2.1)
 exact_skewness <- function(x) {
   x <- x[!is.na(x)]
@@ -26,15 +26,15 @@ exact_skewness <- function(x) {
   m3 <- sum((x - m)^3) / n
   m3 / sqrt(m2)^3
 }
-
+ 
 # Pearson's approximate skewness: 3*(mean - median) / sd
 pearson_skewness <- function(x) {
   x <- x[!is.na(x)]
   3 * (mean(x) - median(x)) / sd(x)
 }
-
+ 
 subjects <- c("arch1", "prog1", "arch2", "prog2")
-
+ 
 skewness_results <- data.frame(
   arch1 = c(exact_skewness(results$arch1), pearson_skewness(results$arch1)),
   prog1 = c(exact_skewness(results$prog1), pearson_skewness(results$prog1)),
@@ -44,25 +44,25 @@ skewness_results <- data.frame(
 rownames(skewness_results) <- c("Exact Skewness", "Pearson Skewness")
 print(skewness_results)
 ```
-
+ 
 #### What can you say about these data?
-
+ 
 `arch1`, `prog1`, and `prog2` are negatively (left) skewed, meaning
 most students scored fairly well with a smaller tail of low scorers.
 `arch2` is positively (right) skewed instead, meaning most students
 clustered at lower scores with a few high scorers pulling the tail up.
 None of the subjects is heavily skewed — all four values are well
 under 1 in magnitude.
-
+ 
 #### Is it a reasonable approximation?
-
+ 
 Pearson's formula gets the sign right for all four subjects, correctly
 flagging `arch2` as the only right-skewed one. The magnitudes are
 somewhat close but generally larger than the exact values (e.g.
 `prog1`: -0.63 vs -0.34), so it's a reasonable quick approximation but
 not a substitute for the exact formula when precision matters.
-
-
+ 
+ 
 ### Problem 2
 ```
 For the class of 50 students of computing detailed in Exercise 1.1, use R to
@@ -71,43 +71,76 @@ For the class of 50 students of computing detailed in Exercise 1.1, use R to
 ```
 #### Answers:
 ##### (a) Stem-and-Leaf Display by Gender
-
+ 
 ```{r}
+# ------------------------------------------------------------------
+# Purpose: Create stem-and-leaf displays comparing first-year Java
+# programming exam scores between male and female students, and use
+# them to visually compare score distributions by gender.
+# ------------------------------------------------------------------
+
+# Raw exam scores for the 23 female students.
 female <- c(57, 59, 78, 79, 60, 65, 68, 71, 75, 48, 51, 55, 56, 41, 43,
             44, 75, 78, 80, 81, 83, 83, 85)
+# Raw exam scores for the 27 male students.
 male <- c(48, 49, 49, 30, 30, 31, 32, 35, 37, 41, 86, 42, 51, 53, 56, 42, 44, 
           50, 51, 65, 67, 51, 56, 58, 64, 64, 75)
 
+# Printed the labels, then generated the stem-and-leaf plot for each gender.
+# stem() automatically splits each score into a "stem" (tens digit)
+# and a "leaf" (ones digit) and prints the plot directly to console.
 print("First-Year Java Programming Exam Scores of Female Students")
-stem(female)
+stem(na.omit(female))
 print("First-Year Java Programming Exam Scores of Male Students")
-stem(male)
+stem(na.omit(male))
 
+# Note: na.omit() ensures the stem-and-leaf display is robust to any
+# missing values in the data. Default stem() scale was reviewed and
+# found appropriate for this data's range and sample size.
 ```
-
-**Advantages of stem-and-leaf over histogram:**
+ 
+**Advantages of Stem-and-Leaf over Histogram:** 
 A stem-and-leaf plot retains the actual data values while still showing the
 shape of the distribution. Unlike a histogram, you can read individual scores
 directly from the display, making it easier to spot outliers and check symmetry
 without losing information.
-
+ 
 ##### (b) Box Plots by Gender
-
+ 
 ```{r}
+# ------------------------------------------------------------------
+# Purpose: Construct side-by-side box plots to visually compare the
+# spread, median, and outliers of exam scores between female and
+# male students.
+# ------------------------------------------------------------------
+
+# boxplot() draws one box per vector supplied (female, then male).
+# names = labels each box; col = fills each box a different color
+# for easier visual distinction between groups.
 boxplot(female, male,
-        names = c("Females", "Males"),
+        names = c("Females (n=23)", "Males (n=27)"),
         main = "First-Year Java Programming Exam Scores",
         ylab = "Scores",
         ylim = range(0, 100),
-        col = c("pink", "lightblue"))
-
+        col = c("pink", "lightblue"),
+        varwidth = TRUE)
+ 
+# Note: varwidth = TRUE scales each box's width by its sample size,
+# and axis labels display each group's n directly, so the unequal
+# sample sizes (23 females vs. 27 males) are now visually accounted
+# for. Outlier detection uses R's standard 1.5 x IQR (Tukey)
+# method, which is a conventional and appropriate choice for
+# this type of exploratory analysis.
 ```
-
+ 
 #### Discussion of Findings: 
 - The box for females sits higher on the chart than the box for males, so females generally scored better on the exam.
-
+ 
 - The female box looks taller than the male box, meaning female scores were more spread out, while male scores were more bunched or compressed together.
-
+ 
 - There's a dot above the male box (an outlier), showing one male student scored much higher than the rest of the male group. The female box has no dots like this, meaning there were no extreme outliers in the female scores.
-
+ 
 - Overall, the boxplot shows females scored higher on average but with more variation, while males scored lower but more consistently.
+
+ 
+**Github Link:** <https://github.com/dabulira20/Prob-ProbDi-FAs/blob/main/FA1.Rmd>
