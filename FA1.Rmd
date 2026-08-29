@@ -1,7 +1,7 @@
 ---
-title: "FA 1"
-author: "SEC2_APM1110-FA1 GROUP_8-DABU, L; LIBRES, B"
-output: html_document
+title: "SEC2_APM1110-FA1 GROUP_8-DABU, L; LIBRES, B"
+subtitle: "Github: https://github.com/dabulira20/Prob-ProbDi-FAs/blob/main/FA1.Rmd"
+output: pdf_document
 date: "`r Sys.Date()`"
 --- 
 
