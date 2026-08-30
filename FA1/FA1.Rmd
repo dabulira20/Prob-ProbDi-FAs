@@ -1,6 +1,6 @@
 ---
 title: "SEC2_APM1110-FA1 GROUP_8-DABU, L; LIBRES, B"
-subtitle: "Github: https://github.com/dabulira20/Prob-ProbDi-FAs/blob/main/FA1.Rmd"
+subtitle: "GitHub: https://github.com/dabulira20/Prob-ProbDi-FAs/tree/main/FA1"
 output: pdf_document
 date: "`r Sys.Date()`"
 ---
@@ -147,4 +147,4 @@ boxplot(female, male,
 - Overall, the boxplot shows females scored higher on average but with more variation, while males scored lower but more consistently.
 
  
-**Github Link:** <https://github.com/dabulira20/Prob-ProbDi-FAs/blob/main/FA1.Rmd>
+**Github Link:** <https://github.com/dabulira20/Prob-ProbDi-FAs/tree/main/FA1>
