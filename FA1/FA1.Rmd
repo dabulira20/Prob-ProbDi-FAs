@@ -11,7 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
  
 ### Problem 1
 ```
-Write the skewness program, and use it to calculate the skewness coefficient of the four examination subjects in results.txt (results.csv). What can you say about these data? Is Pearson’s approximation reasonable?
+Write the skewness program, and use it to calculate the skewness coefficient of the four 
+examination subjects in results.txt (results.csv). What can you say about these data? 
+Is Pearson’s approximation reasonable?
 ```
  
 ```{r}
@@ -66,7 +68,8 @@ not a substitute for the exact formula when precision matters.
 ### Problem 2
 ```
 For the class of 50 students of computing detailed in Exercise 1.1, use R to
-(a)  form the stem-and-leaf display for each gender, and discuss the advantages of this representation compared to the traditional histogram; 
+(a)  form the stem-and-leaf display for each gender, and discuss the advantages 
+of this representation compared to the traditional histogram; 
 (b)  construct a box-plot for each gender and discuss the findings. 
 ```
 #### Answers:
@@ -107,16 +110,17 @@ without losing information.
  
 ##### (b) Box Plots by Gender
  
-```{r}
+```{r, fig.align='center', fig.width=6, fig.height=4}
 # ------------------------------------------------------------------
 # Purpose: Construct side-by-side box plots to visually compare the
 # spread, median, and outliers of exam scores between female and
 # male students.
 # ------------------------------------------------------------------
-
 # boxplot() draws one box per vector supplied (female, then male).
 # names = labels each box; col = fills each box a different color
 # for easier visual distinction between groups.
+
+par(mar = c(5, 4, 4, 2) + 0.1)
 boxplot(female, male,
         names = c("Females (n=23)", "Males (n=27)"),
         main = "First-Year Java Programming Exam Scores",
