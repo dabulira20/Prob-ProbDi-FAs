@@ -1,6 +1,7 @@
 ---
 title: "SEC2_APM1110-FA2_GROUP_8-DABU, L; LIBRES, B"
 date: "`r Sys.Date()`"
+subtitle: "GitHub: https://github.com/dabulira20/Prob-ProbDi-FAs/tree/main/FA2"
 output: 
   pdf_document: 
     latex_engine: xelatex
