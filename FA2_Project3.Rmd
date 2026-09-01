@@ -1,0 +1,78 @@
+---
+title: "SEC2_APM1110-FA2_GROUP_8-DABU, L; LIBRES, B"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Problem (#3)
+
+An experiment consists of rolling a fair die 600 times. Using R, we simulate 
+this experiment to calculate the empirical relative frequency of each faces of the die 
+(1 through 6) and estimate the probability of rolling each face. These 
+simulated estimates are then compared against the theoretical probability 
+of 1/6 ≈ 0.1667.
+
+# 2. R Code and Output
+
+```{r simulation}
+# set.seed ensures reproducibility of the random sample
+set.seed(123)
+n_rolls <- 600
+faces <- 1:6
+
+rolls <- sample(faces, size = n_rolls, replace = TRUE)  # simulate 600 rolls
+roll_counts <- table(rolls)                              # count each face
+relative_freq <- roll_counts / n_rolls                    # relative frequency
+relative_freq
+```
+
+# 3. Results Table
+
+```{r results-table}
+results_table <- data.frame(
+  Face               = as.integer(names(roll_counts)),
+  Count              = as.integer(roll_counts),
+  Relative_Frequency = round(as.numeric(relative_freq), 4),
+  Theoretical_Prob   = round(1/6, 4), 
+  Difference         = round(as.numeric(relative_freq) - 1/6, 4)
+)
+# Results are based on a fixed seed (123) for reproducibility.
+results_table
+```
+
+Since we assume to have used a fair die, the theoretical probability for each face is 1/6.
+In comparison, all six relative frequencies land close to 1/6, with differences no
+larger than about ±0.012 — the small gap expected from a finite
+sample of 600 fair rolls. 
+
+# 4. Quick Check
+
+```{r check}
+sum(relative_freq)   # should equal 1
+```
+
+The relative frequencies sum to exactly 1, confirming they form a
+valid probability distribution and the counts were tabulated
+correctly.
+
+# 5. Plot
+
+```{r barplot, fig.width=6, fig.height=4}
+barplot(as.numeric(relative_freq), names.arg = faces, col = "skyblue",
+        ylim = c(0, 0.25), xlab = "Die Face", ylab = "Relative Frequency",
+        main = paste0("Relative Frequency of Each Face (", n_rolls, " Rolls)"))
+abline(h = 1/6, col = "red", lwd = 2, lty = 2)
+```
+
+# 6. Conclusion
+
+The simulated relative frequencies for all six faces were close to
+the theoretical probability of 1/6, confirming that a fair die's
+outcomes are equally likely and that 600 trials provide a close
+empirical approximation to the true probability.
