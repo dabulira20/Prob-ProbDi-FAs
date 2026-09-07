@@ -1,0 +1,167 @@
+---
+title: "SEC2_APM1110-FA2-DABU, L."
+subtitle: "GitHub: https://github.com/dabulira20/Prob-ProbDi-FAs/tree/main/FA2"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### 1. Problem (#5) 
+A geospatial analysis system has four sensors supplying images. The
+percentage of images supplied by each sensor and the percentage of relevant
+images (relative to a query) from each sensor are given below.
+
+| Sensor | % of Images Supplied | % of Relevant Images |
+|:------:|:---------------------:|:---------------------:|
+|   1    |          15           |          50           |
+|   2    |          20           |          60           |
+|   3    |          25           |          80           |
+|   4    |          40           |          85           |
+
+We are asked for the **overall percentage of relevant images**.
+
+#### Solution
+
+Let $B_i$ be the event that an image comes from sensor $i$, and let $A$ be the
+event that an image is relevant. We are given
+
+$$P(B_1)=0.15,\; P(B_2)=0.20,\; P(B_3)=0.25,\; P(B_4)=0.40$$
+$$P(A\mid B_1)=0.50,\; P(A\mid B_2)=0.60,\; P(A\mid B_3)=0.80,\; P(A\mid B_4)=0.85$$
+
+By the **Law of Total Probability**:
+
+$$P(A)=\sum_{i=1}^{4} P(B_i)\,P(A\mid B_i)$$
+
+```{r item5-calc}
+# Percentage of images supplied by each sensor (as proportions)
+P_B <- c(0.15, 0.20, 0.25, 0.40)
+
+# Percentage of relevant images from each sensor (as proportions)
+P_A_given_B <- c(0.50, 0.60, 0.80, 0.85)
+
+# Individual contribution of each sensor to overall relevance
+contribution <- P_B * P_A_given_B
+names(contribution) <- paste("Sensor", 1:4)
+contribution
+
+# Overall probability (percentage) of relevant images
+P_A <- sum(contribution)
+P_A
+```
+
+```{r item5-percent}
+cat("Overall percentage of relevant images =", P_A * 100, "%\n")
+```
+
+**Answer.**
+
+$$P(A) = (0.15)(0.50)+(0.20)(0.60)+(0.25)(0.80)+(0.40)(0.85)$$
+$$P(A) = 0.075+0.12+0.20+0.34 = 0.735$$
+
+The overall percentage of relevant images is **73.5%**.
+
+---
+
+### 2. Problem (#6) 
+
+A fair coin is tossed twice. Let
+
+- $E_1$ = event that both tosses have the same outcome, $E_1=\{HH,TT\}$
+- $E_2$ = event that the first toss is a head, $E_2=\{HH,HT\}$
+- $E_3$ = event that the second toss is a head, $E_3=\{TH,HH\}$
+
+Show that $E_1,E_2,E_3$ are **pairwise independent** but **not mutually
+independent**.
+
+#### Solution
+
+The sample space for two coin tosses is
+$$S=\{HH,\,HT,\,TH,\,TT\}$$
+with each outcome equally likely, i.e. probability $1/4$ each.
+
+```{r item6-setup}
+# Sample space
+S <- c("HH", "HT", "TH", "TT")
+p_outcome <- 1/4  # each outcome equally likely
+
+# Define the events
+E1 <- c("HH", "TT")   # both tosses same
+E2 <- c("HH", "HT")   # first toss is head
+E3 <- c("TH", "HH")   # second toss is head
+
+P_E1 <- length(E1) * p_outcome
+P_E2 <- length(E2) * p_outcome
+P_E3 <- length(E3) * p_outcome
+
+c(P_E1 = P_E1, P_E2 = P_E2, P_E3 = P_E3)
+```
+
+Each event has probability $1/2$:
+$$P(E_1)=P(E_2)=P(E_3)=\frac{2}{4}=\frac{1}{2}$$
+
+### Pairwise independence
+
+Two events $X$ and $Y$ are independent if $P(X\cap Y)=P(X)P(Y)$.
+
+```{r item6-pairwise}
+# Intersections
+E1_E2 <- intersect(E1, E2)
+E1_E3 <- intersect(E1, E3)
+E2_E3 <- intersect(E2, E3)
+
+P_E1E2 <- length(E1_E2) * p_outcome
+P_E1E3 <- length(E1_E3) * p_outcome
+P_E2E3 <- length(E2_E3) * p_outcome
+
+data.frame(
+  Pair = c("E1 & E2", "E1 & E3", "E2 & E3"),
+  Intersection = c(paste(E1_E2, collapse=","),
+                    paste(E1_E3, collapse=","),
+                    paste(E2_E3, collapse=",")),
+  P_intersection = c(P_E1E2, P_E1E3, P_E2E3),
+  Product_of_P = c(P_E1*P_E2, P_E1*P_E3, P_E2*P_E3)
+)
+```
+
+- $E_1\cap E_2=\{HH\}\Rightarrow P(E_1\cap E_2)=\dfrac{1}{4}=P(E_1)P(E_2)=\dfrac12\cdot\dfrac12=\dfrac14$ ✓
+- $E_1\cap E_3=\{HH\}\Rightarrow P(E_1\cap E_3)=\dfrac{1}{4}=P(E_1)P(E_3)=\dfrac14$ ✓
+- $E_2\cap E_3=\{HH\}\Rightarrow P(E_2\cap E_3)=\dfrac{1}{4}=P(E_2)P(E_3)=\dfrac14$ ✓
+
+Since all three pairwise products match the corresponding joint
+probabilities, $E_1,E_2,E_3$ are **pairwise independent**.
+
+### Mutual independence check
+
+For **mutual** independence, in addition to the pairwise condition we also
+need
+$$P(E_1\cap E_2\cap E_3)=P(E_1)\,P(E_2)\,P(E_3)$$
+
+```{r item6-mutual}
+E123 <- intersect(intersect(E1, E2), E3)
+P_E123 <- length(E123) * p_outcome
+product_all <- P_E1 * P_E2 * P_E3
+
+data.frame(
+  Quantity = c("P(E1 ∩ E2 ∩ E3)", "P(E1)P(E2)P(E3)"),
+  Value = c(P_E123, product_all)
+)
+```
+
+$$E_1\cap E_2\cap E_3=\{HH\}\Rightarrow P(E_1\cap E_2\cap E_3)=\frac14$$
+$$P(E_1)P(E_2)P(E_3)=\frac12\cdot\frac12\cdot\frac12=\frac18$$
+
+Since
+$$\frac14 \neq \frac18,$$
+the mutual-independence condition **fails**.
+
+#### Conclusion
+
+$E_1, E_2, E_3$ satisfy $P(E_i\cap E_j)=P(E_i)P(E_j)$ for every pair
+$(i,j)$, so they are **pairwise independent**. However, because
+$P(E_1\cap E_2\cap E_3)\neq P(E_1)P(E_2)P(E_3)$ ($\tfrac14 \neq \tfrac18$),
+the three events are **not mutually independent**.
