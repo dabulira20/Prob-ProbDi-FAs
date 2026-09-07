@@ -1,6 +1,6 @@
 ---
 title: "SEC2_APM1110-FA2-DABU, L."
-subtitle: "GitHub: https://github.com/dabulira20/Prob-ProbDi-FAs/tree/main/FA2"
+subtitle: "GitHub: https://github.com/dabulira20/Prob-ProbDi-FAs/tree/main/FA3"
 date: "`r Sys.Date()`"
 output: 
   pdf_document: 
