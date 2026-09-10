@@ -1,0 +1,142 @@
+---
+title: "SEC2_APM1110-FA4-DABU, L."
+subtitle: "GitHub: https://github.com/dabulira20/Prob-ProbDi-FAs/tree/main/FA4"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### 1. Exercise 2
+
+A binary communication channel carries data as one of two sets of signals
+denoted by 0 and 1. Owing to noise, a transmitted 0 is sometimes received as
+a 1, and a transmitted 1 is sometimes received as a 0. A transmitted 0 is
+correctly received with probability 0.95, and a transmitted 1 is correctly
+received with probability 0.75. Also, 70% of all messages are transmitted as
+a 0.
+
+**Notation**
+
+- $T_0$: a 0 is transmitted, $T_1$: a 1 is transmitted
+- $R_0$: a 0 is received, $R_1$: a 1 is received
+
+**Given probabilities**
+
+- $P(T_0) = 0.70$, therefore $P(T_1) = 0.30$
+- $P(R_0 \mid T_0) = 0.95$, therefore $P(R_1 \mid T_0) = 0.05$
+- $P(R_1 \mid T_1) = 0.75$, therefore $P(R_0 \mid T_1) = 0.25$
+
+```{r ex2-setup}
+P_T0 <- 0.70
+P_T1 <- 0.30
+
+P_R1_given_T0 <- 0.05   # 0 transmitted, but received as 1
+P_R1_given_T1 <- 0.75   # 1 transmitted, correctly received as 1
+```
+
+#### (a) Probability that a 1 was received
+
+Using the Law of Total Probability:
+
+$$P(R_1) = P(R_1 \mid T_0)\,P(T_0) + P(R_1 \mid T_1)\,P(T_1)$$
+
+```{r ex2-a}
+P_R1 <- P_R1_given_T0 * P_T0 + P_R1_given_T1 * P_T1
+P_R1
+```
+
+**Answer:** $P(R_1) = 0.26$, so there is a **26% probability** that a 1 was received.
+
+#### (b) Probability that a 1 was transmitted, given that a 1 was received
+
+Using Bayes' Theorem:
+
+$$P(T_1 \mid R_1) = \frac{P(R_1 \mid T_1)\,P(T_1)}{P(R_1)}$$
+
+```{r ex2-b}
+P_T1_given_R1 <- (P_R1_given_T1 * P_T1) / P_R1
+P_T1_given_R1
+```
+
+**Answer:** $P(T_1 \mid R_1) \approx 0.8654$, so there is roughly an **86.54% probability**
+that a 1 was transmitted given that a 1 was received.
+
+---
+
+### Exercise 7
+
+There are three employees at an IT company: Jane, Amy, and Ava, who do 10%,
+30%, and 60% of the programming, respectively. 8% of Jane's work, 5% of Amy's
+work, and 1% of Ava's work contains errors.
+
+**Notation**
+
+- $J$, $A$, $V$: the program was written by Jane, Amy, or Ava respectively
+- $E$: the program contains an error
+
+**Given probabilities**
+
+- $P(J) = 0.10$, $P(A) = 0.30$, $P(V) = 0.60$
+- $P(E \mid J) = 0.08$, $P(E \mid A) = 0.05$, $P(E \mid V) = 0.01$
+
+```{r ex7-setup}
+P_J <- 0.10
+P_A <- 0.30
+P_V <- 0.60
+
+P_E_given_J <- 0.08
+P_E_given_A <- 0.05
+P_E_given_V <- 0.01
+```
+
+#### Overall percentage of error
+
+Using the Law of Total Probability:
+
+$$P(E) = P(E\mid J)P(J) + P(E\mid A)P(A) + P(E\mid V)P(V)$$
+
+```{r ex7-overall}
+P_E <- P_E_given_J * P_J + P_E_given_A * P_A + P_E_given_V * P_V
+P_E
+```
+
+**Answer:** $P(E) = 0.029$, so the overall error rate is **2.9%**.
+
+#### Most likely author of an erroneous program
+
+Using Bayes' Theorem for each employee:
+
+$$P(J\mid E) = \frac{P(E\mid J)P(J)}{P(E)}, \quad
+  P(A\mid E) = \frac{P(E\mid A)P(A)}{P(E)}, \quad
+  P(V\mid E) = \frac{P(E\mid V)P(V)}{P(E)}$$
+
+```{r ex7-bayes}
+P_J_given_E <- (P_E_given_J * P_J) / P_E
+P_A_given_E <- (P_E_given_A * P_A) / P_E
+P_V_given_E <- (P_E_given_V * P_V) / P_E
+
+results <- data.frame(
+  Employee = c("Jane", "Amy", "Ava"),
+  `P(Employee | Error)` = c(P_J_given_E, P_A_given_E, P_V_given_E),
+  check.names = FALSE
+)
+results
+```
+
+**Answer:**
+
+| Employee | P(Employee \| Error) |
+|----------|----------------------|
+| Jane     | 0.2759 (27.59%)      |
+| Amy      | 0.5172 (51.72%)      |
+| Ava      | 0.2069 (20.69%)      |
+
+**Amy is the most likely person to have written a program containing an
+error (≈51.72%).** Even though Jane has the highest individual error rate
+(8%), Amy does far more of the total programming (30% vs. Jane's 10%), so in
+absolute terms more of the company's errors trace back to her work.
