@@ -1,0 +1,228 @@
+---
+title: "FA7_Part 1: Exponential Distribution of Turnstile Failures in the FC Building"
+author: "Lira Dabu, Ben Libres, Aldwin Montilla"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    latex_engine: xelatex
+mainfont: "Times New Roman"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 7, fig.height = 4.5)
+```
+
+# Importing and Organizing the Data
+
+```{r read_data}
+# 1. Import the data collected
+raw <- read.csv("raw.csv", header = TRUE, check.names = FALSE)
+
+# 2. Keep the 2 columns and clean the header names
+turnstile <- raw[, 1:2]
+names(turnstile) <- c("Observation", "Interarrival_sec")
+
+# Convert to numeric safely: strip anything that is not a digit, dot or minus
+to_num <- function(v) suppressWarnings(as.numeric(gsub("[^0-9.-]", "", as.character(v))))
+
+turnstile$Observation      <- to_num(turnstile$Observation)
+turnstile$Interarrival_sec <- to_num(turnstile$Interarrival_sec)
+
+# Keep only real observation rows (drops blank/summary rows)
+turnstile <- turnstile[!is.na(turnstile$Observation) &
+                         !is.na(turnstile$Interarrival_sec), ]
+rownames(turnstile) <- NULL
+
+stopifnot("No valid inter-arrival values found - check the CSV columns" =
+            nrow(turnstile) > 0)
+
+# 3. Compute cumulative time from the inter-arrival times
+turnstile$Cumulative_sec <- round(cumsum(turnstile$Interarrival_sec), 2)
+
+# 4. Convert cumulative seconds to hh:mm:ss
+secs <- round(turnstile$Cumulative_sec)
+turnstile$Timestamp <- sprintf("%02d:%02d:%02d",
+                               secs %/% 3600,
+                               (secs %% 3600) %/% 60,
+                               secs %% 60)
+
+# 5. Final organized table
+turnstile <- turnstile[, c("Observation", "Interarrival_sec",
+                           "Cumulative_sec", "Timestamp")]
+print(turnstile, row.names = FALSE)
+```
+
+```{r setup_vars}
+# Variable used throughout: waiting time (seconds) between consecutive failures
+x      <- turnstile$Interarrival_sec
+n      <- length(x)
+lambda <- 1 / mean(x)       # estimated rate (failures per second)
+EX     <- 1 / lambda        # mean waiting time (seconds)
+```
+
+# 1. Verify if Exponential Distribution is Applicable
+
+## Are the events occurring randomly and independently over time?
+
+```{r random_independent}
+# RANDOM + steady rate: cumulative failures over time (red line = perfectly steady)
+plot(turnstile$Cumulative_sec, turnstile$Observation, type = "s",
+     xlab = "Time (seconds)", ylab = "Cumulative failures",
+     main = "Cumulative failures over time")
+abline(0, lambda, col = "red", lty = 2)
+
+# INDEPENDENT: do gaps predict the next gap?
+acf(x, main = "ACF of inter-arrival times")
+
+lag1  <- cor(x[-n], x[-1])   # lag-1 correlation
+limit <- 2 / sqrt(n)         # approximate 95% limit
+cat("Lag-1 correlation:", round(lag1, 3), "\n",
+    "+/- limit (2/sqrt(n)):", round(limit, 3), "\n")
+```
+
+The occurrences of turnstile failures (unresponsive I.D. scanner or face recognition failure) occurred randomly and independently over time.
+
+The autocorrelation plot shows that consecutive waiting times are not related (lag-1 correlation = `r round(lag1, 3)`, within the ±`r round(limit, 2)` limit), meaning that a prior error does not affect or result in a higher or lower probability of the next error event happening.
+
+The cumulative failures plot shows that failures occurred throughout the observation period, but the pace was not perfectly steady. There were more failures early on than later because the observation was conducted during peak hours of student entries at around 12:00 noon, meaning it had a faster start of the event occurrences.
+
+Since the events are random and independent, with only a mild variation in rate, the exponential distribution is a reasonable model for the waiting time between failures.
+
+## Identify the average rate (λ) of event occurrence per unit of time
+
+```{r ave_rate}
+# For an exponential distribution, mean waiting time = 1/lambda,
+# so we estimate lambda as 1 divided by the sample mean.
+lambda_sec <- 1 / mean(x)      # failures per second
+lambda_min <- lambda_sec * 60  # failures per minute
+
+cat("Sample size (n):", n, "\n",
+    "Average waiting time:", round(mean(x), 2), "seconds\n",
+    "Rate (lambda):", round(lambda_sec, 5), "failures per second\n",
+    "Rate (lambda):", round(lambda_min, 3), "failures per minute\n")
+```
+
+The average rate of failure is λ = `r round(lambda_sec, 4)` failures per second (about `r round(lambda_min, 2)` per minute), or one failure about every `r round(mean(x))` seconds.
+
+# 2. Compute Key Parameters
+
+## Mean (expected value) = 1/λ
+
+```{r mean}
+cat("lambda    =", round(lambda, 4), "failures per second\n",
+    "Mean E[X] =", round(EX, 4), "seconds\n")
+```
+
+## Probability Density Function (PDF)
+
+$$f(t) = \lambda e^{-\lambda t}, \quad t \ge 0$$
+
+```{r pdf}
+# Height of the curve at a chosen time (curve is highest at 0 and decreases).
+t0 <- 30                                # time to evaluate (seconds)
+f  <- lambda * exp(-lambda * t0)
+
+cat("f(", t0, ") =", round(f, 4), "\n")
+```
+
+## Cumulative Distribution Function (CDF)
+
+$$F(t) = P(X \le t) = 1 - e^{-\lambda t}$$
+
+```{r cdf}
+# Probability that the next failure happens within t0 seconds.
+F_cdf <- 1 - exp(-lambda * t0)
+
+cat("P(X <=", t0, ") =", round(F_cdf, 4), "\n")
+```
+
+## Probabilities (computed in R)
+
+```{r probabilities}
+times <- c(10, 30, 60, 120)
+
+prob_table <- data.frame(
+  Time_sec        = times,
+  P_within_t      = round(1 - exp(-lambda * times), 4),   # P(X <= t)
+  P_longer_than_t = round(exp(-lambda * times), 4)        # P(X > t)
+)
+prob_table
+
+# Cross-check using R's built-in exponential functions
+round(pexp(times, rate = lambda), 4)
+```
+
+# 3. Visualize and Check the Fit
+
+```{r histogram_fit}
+# Histogram of observed waiting times vs. fitted exponential PDF
+hist(x, breaks = 10, freq = FALSE, col = "lightblue", border = "white",
+     xlab = "Time between failures (seconds)",
+     main = "Observed waiting times vs. Exponential PDF")
+curve(dexp(x, rate = lambda), from = 0, to = max(x), add = TRUE,
+      col = "red", lwd = 2)
+legend("topright", legend = c("Observed (histogram)", "Exponential PDF"),
+       fill = c("lightblue", NA), border = c("white", NA),
+       lty = c(NA, 1), col = c(NA, "red"), lwd = c(NA, 2), bty = "n")
+```
+
+```{r cdf_fit}
+# Empirical CDF vs. fitted exponential CDF
+plot(ecdf(x), main = "Empirical CDF vs. Exponential CDF",
+     xlab = "Time between failures (seconds)", ylab = "Cumulative probability")
+curve(pexp(x, rate = lambda), from = 0, to = max(x), add = TRUE,
+      col = "red", lwd = 2)
+legend("bottomright", legend = c("Empirical CDF", "Exponential CDF"),
+       lty = 1, col = c("black", "red"), bty = "n")
+```
+
+```{r qq_ks}
+# Q-Q plot against the exponential distribution
+qqplot(qexp(ppoints(n), rate = lambda), x,
+       xlab = "Theoretical exponential quantiles (sec)",
+       ylab = "Observed quantiles (sec)",
+       main = "Exponential Q-Q plot")
+abline(0, 1, col = "red", lty = 2)
+
+# Kolmogorov-Smirnov goodness-of-fit test
+ks.test(x, "pexp", rate = lambda)
+```
+
+A p-value above 0.05 in the Kolmogorov-Smirnov test means there is no evidence against the exponential model, which supports using it for the waiting times between turnstile failures.
+
+# 4. Report Findings
+
+**Chosen scenario.** Turnstile failures at the security gates of the FEUture Center (FC) Building, defined as an unresponsive I.D. scanner or a face recognition failure. The random variable is the waiting time (in seconds) between one failure and the next.
+
+**Data collection process.** The time gap between consecutive turnstile failures was recorded during peak student entry hours at around 12:00 noon, giving **`r n` observations**. Cumulative times were recomputed from the inter-arrival times and checked against the recorded values, then converted to hh:mm:ss timestamps.
+
+**Computed parameters.**
+
+```{r summary_table, echo=FALSE}
+data.frame(
+  Parameter = c("Sample size (n)", "Rate λ (per second)", "Rate λ (per minute)",
+                "Mean waiting time E[X] = 1/λ (seconds)", "Lag-1 autocorrelation"),
+  Value     = c(n, round(lambda, 4), round(lambda * 60, 3),
+                round(EX, 2), round(lag1, 3))
+)
+```
+
+**Graphs.** See the cumulative failures plot, ACF plot, histogram with the fitted exponential PDF, empirical vs. exponential CDF, and Q-Q plot above.
+
+**Interpretation and real-world implications.** See Section 5.
+
+# 5. Interpret the Results
+
+## Determine the likelihood of turnstile failure in the FC Building
+
+Using the Cumulative Distribution Function (CDF) for exponential waiting times, $P(X \le t) = 1 - e^{-\lambda t}$, the likelihood that the next turnstile failure will occur within a given timeframe is:
+
+- Within 10 seconds: **`r sprintf("%.2f", 100 * (1 - exp(-lambda * 10)))`%** chance
+- Within 30 seconds: **`r sprintf("%.2f", 100 * (1 - exp(-lambda * 30)))`%** chance
+- Within 60 seconds (1 minute): **`r sprintf("%.2f", 100 * (1 - exp(-lambda * 60)))`%** chance
+- Within 120 seconds (2 minutes): **`r sprintf("%.2f", 100 * (1 - exp(-lambda * 120)))`%** chance
+
+## Implications
+
+Because there is over a 76.7% chance that a failure will happen within a minute, and the average gap is only 41.15 seconds, system malfunctions occur frequently during peak student entry hours. This rapid succession of errors can quickly cause long queues and foot-traffic bottlenecks at the security gates  of FEUture Center Building. As mitigation to this, a manual ID scanner is placed in the security gates.  This also demands guards to be stationed, most especially in peak hours of student entry in FC Building. Furthermore, the maintenance of the turnstile systems should be done constantly to address these failures.
